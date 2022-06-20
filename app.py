@@ -14,7 +14,8 @@ from flask import (
   Response,
   flash,
   redirect,
-  url_for 
+  url_for ,
+  jsonify
 )
 from flask_moment import Moment
 from flask_migrate import Migrate
@@ -180,7 +181,7 @@ def show_venue(venue_id):
   for show in shows:
     data = {
       "artist_id": show.artist_id,
-      # "artist_name": show.artist_name,
+      "artist_name": show.artist_name,
       "artist_image_link": show.artist.image_link,
       "start_time": format_datetime(str(show.start_time))}
     if show.start_time > current_time:
@@ -252,10 +253,17 @@ def create_venue_submission():
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
+  try:
+    Venue.query.filter_by(id=venue_id).delete()
+    db.session.commit()
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
+  return jsonify({'success': True})
 
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -383,19 +391,25 @@ def show_artist(artist_id):
 @app.route('/artists/<int:artist_id>/edit', methods=['GET'])
 def edit_artist(artist_id):
   form = ArtistForm()
-  artist={
-    "id": 4,
-    "name": "Guns N Petals",
-    "genres": ["Rock n Roll"],
-    "city": "San Francisco",
-    "state": "CA",
-    "phone": "326-123-5000",
-    "website": "https://www.gunsnpetalsband.com",
-    "facebook_link": "https://www.facebook.com/GunsNPetals",
-    "seeking_venue": True,
-    "seeking_description": "Looking for shows to perform at in the San Francisco Bay Area!",
-    "image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80"
-  }
+    
+  artist = Artist.query.get(artist_id)
+  artist.name = request.form['name']
+  artist.city = request.form['city']
+  artist.state = request.form['state']
+  artist.phone = request.form['phone']
+  artist.facebook_link = request.form['facebook_link']
+  artist.genres = request.form['genres']
+  artist.image_link = request.form['image_link']
+  artist.website = request.form['website']
+  try:
+    db.session.add(artist)
+    db.session.commit()
+    flash("Artist {} is updated successfully".format(artist.name))
+  except:
+    db.session.rollback()
+    flash("Artist was not updated successfully")
+  finally:
+    db.session.close()
   # TODO: populate form with fields from artist with ID <artist_id>
   return render_template('forms/edit_artist.html', form=form, artist=artist)
 
