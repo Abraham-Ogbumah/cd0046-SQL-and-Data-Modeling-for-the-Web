@@ -22,10 +22,10 @@ class Venue(db.Model):
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
     genres = db.Column(db.ARRAY(db.String), nullable=False)
-    website_link = db.Column(db.String(500))
-    looking_for_talent = db.Column(db.Boolean, default=False)
+    website = db.Column(db.String(500))
+    seeking_talent = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show',backref='Venue',lazy=True)
+    shows = db.relationship('Show',backref='venue',lazy='joined', cascade="all, delete")
 
     def __repr__(self):
       return f'<Venue {self.id} {self.name}>'
@@ -44,10 +44,10 @@ class Artist(db.Model):
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
 
-    website_link = db.Column(db.String(500))
-    looking_for_venues = db.Column(db.Boolean, default=False)
+    website = db.Column(db.String(500))
+    seeking_venues = db.Column(db.Boolean, default=False)
     seeking_description = db.Column(db.String(500))
-    shows = db.relationship('Show',backref='Artist',lazy=True)
+    shows = db.relationship('Show', backref='artist', lazy='joined', cascade="all, delete")
 
 # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
 class Show(db.Model):

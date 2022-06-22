@@ -24,6 +24,7 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from datetime import datetime
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -142,70 +143,70 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   
-  # data = Venue.query.get(venue_id)
-  # setattr(data, "genres", data.genres.split(","))
+  data = Venue.query.get(venue_id)
+  setattr(data, "genres", data.genres.split(","))
 
-  # past_shows = list(filter(lambda show: show.start_time < datetime.now(), data.shows))
-  # temp_shows = []
-  # for show in past_shows:
-  #   temp = {}
-  #   temp["artist_name"] = show.venue.name
-  #   temp["artist_id"] = show.venue.id
-  #   temp["artist_image_link"] = show.venue.image_link
-  #   temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-  #   temp_shows.append(temp)
+  past_shows = list(filter(lambda show: show.start_time < datetime.now(), data.shows))
+  temp_shows = []
+  for show in past_shows:
+    temp = {}
+    temp["artist_name"] = show.venue.name
+    temp["artist_id"] = show.venue.id
+    temp["artist_image_link"] = show.venue.image_link
+    temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+    temp_shows.append(temp)
 
-  # setattr(data, "past_shows", temp_shows)
-  # setattr(data,"past_shows_count", len(past_shows))
+  setattr(data, "past_shows", temp_shows)
+  setattr(data,"past_shows_count", len(past_shows))
 
-  # upcoming_shows = list(filter(lambda show: show.start_time > datetime.now(), data.shows))
-  # temp_shows = []
-  # for show in upcoming_shows:
-  #     temp = {}
-  #     temp["artist_name"] = show.artists.name
-  #     temp["artist_id"] = show.artists.id
-  #     temp["artist_image_link"] = show.artists.image_link
-  #     temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-  #     temp_shows.append(temp)
+  upcoming_shows = list(filter(lambda show: show.start_time > datetime.now(), data.shows))
+  temp_shows = []
+  for show in upcoming_shows:
+      temp = {}
+      temp["artist_name"] = show.artists.name
+      temp["artist_id"] = show.artists.id
+      temp["artist_image_link"] = show.artists.image_link
+      temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
+      temp_shows.append(temp)
 
-  # setattr(data, "upcoming_shows", temp_shows)    
-  # setattr(data,"upcoming_shows_count", len(upcoming_shows))
+  setattr(data, "upcoming_shows", temp_shows)    
+  setattr(data,"upcoming_shows_count", len(upcoming_shows))
 
-  venue = Venue.query.filter_by(id=venue_id).one()
-  shows = Show.query.filter_by(venue_id=venue_id).all()
+  # venue = Venue.query.filter_by(id=venue_id).one()
+  # shows = Show.query.filter_by(venue_id=venue_id).all()
   
-  past_shows = []
-  upcoming_shows = []
-  current_time = datetime.now()
+  # past_shows = []
+  # upcoming_shows = []
+  # current_time = datetime.now()
   
-  for show in shows:
-    data = {
-      "artist_id": show.artist_id,
-      "artist_name": show.artist_name,
-      "artist_image_link": show.artist.image_link,
-      "start_time": format_datetime(str(show.start_time))}
-    if show.start_time > current_time:
-      upcoming_shows.append(data)
-    else:
-      past_shows.append(data)
+  # for show in shows:
+  #   data = {
+  #     "artist_id": show.artist_id,
+  #     "artist_name": show.artist_name,
+  #     "artist_image_link": show.artist.image_link,
+  #     "start_time": format_datetime(str(show.start_time))}
+  #   if show.start_time > current_time:
+  #     upcoming_shows.append(data)
+  #   else:
+  #     past_shows.append(data)
     
-  data={
-    "id": venue.id,
-    "name": venue.name,
-    "genres": venue.genres,
-    "address": venue.address,
-    "city": venue.city,
-    "state": venue.state,
-    "phone": venue.phone,
-    "website": venue.website,
-    "facebook_link": venue.facebook_link,
-    "seeking_talent": venue.seeking_talent,
-    "seeking_description":venue.description,
-    "image_link": venue.image_link,
-    "past_shows": past_shows,
-    "upcoming_shows": upcoming_shows,
-    "past_shows_count": len(past_shows),"upcoming_shows_count": len(upcoming_shows)
-  }
+  # data={
+  #   "id": venue.id,
+  #   "name": venue.name,
+  #   "genres": venue.genres,
+  #   "address": venue.address,
+  #   "city": venue.city,
+  #   "state": venue.state,
+  #   "phone": venue.phone,
+  #   "website": venue.website,
+  #   "facebook_link": venue.facebook_link,
+  #   "seeking_talent": venue.seeking_talent,
+  #   "seeking_description":venue.description,
+  #   "image_link": venue.image_link,
+  #   "past_shows": past_shows,
+  #   "upcoming_shows": upcoming_shows,
+  #   "past_shows_count": len(past_shows),"upcoming_shows_count": len(upcoming_shows)
+  # }
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -213,7 +214,31 @@ def show_venue(venue_id):
 
 @app.route('/venues/create', methods=['GET'])
 def create_venue_form():
-  form = VenueForm()
+  form = VenueForm(request.form)
+
+  try:
+    venue = Venue(
+      name = form.name.data,
+      city = form.city.data,
+      state = form.state.data,
+      address = form.address.data,
+      phone = form.phone.data,
+      facebook_link = form.facebook_link.data,
+      genres = form.genres.data,
+      website = form.website_link.data,
+      image_link = form.image_link.data,
+      # venue.looking_for_talent = request.form['looking_for_talent']
+      seeking_description = form.seeking_description.data
+    )
+
+    db.session.add(venue)
+    db.session.commit()
+  
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
+
   return render_template('forms/new_venue.html', form=form)
 
 @app.route('/venues/create', methods=['POST'])
@@ -229,7 +254,7 @@ def create_venue_submission():
   venue.phone = request.form['phone']
   venue.facebook_link = request.form['facebook_link']
   venue.genres = request.form['genres']
-  venue.website_link = request.form['website_link']
+  venue.website = request.form['website']
   venue.image_link = request.form['image_link']
   # venue.looking_for_talent = request.form['looking_for_talent']
   venue.seeking_description = request.form['seeking_description']
@@ -460,7 +485,28 @@ def edit_venue_submission(venue_id):
 
 @app.route('/artists/create', methods=['GET'])
 def create_artist_form():
-  form = ArtistForm()
+  form = ArtistForm(request.form)
+
+  try:
+    artist = Artist(
+      name = form.name.data,
+      city = form.city.data,
+      state = form.state.data,
+      phone = form.phone.data,
+      facebook_link = form.facebook_link.data,
+      genres = form.genres.data,
+      website = form.website_link.data,
+      image_link = form.image_link.data,
+      # venue.looking_for_talent = request.form['looking_for_talent']
+      seeking_description = form.seeking_description.data
+    )
+    db.session.add(artist)
+    db.session.commit()  
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
+
   return render_template('forms/new_artist.html', form=form)
 
 @app.route('/artists/create', methods=['POST'])
@@ -477,7 +523,7 @@ def create_artist_submission():
   artist.genres = request.form['genres']
   artist.facebook_link = request.form['facebook_link']
   artist.image_link = request.form['image_link']
-  artist.website_link = request.form['website_link']
+  artist.website = request.form['website_link']
   # venue.looking_for_talent = request.form['looking_for_talent']
   artist.seeking_description = request.form['seeking_description']
 
