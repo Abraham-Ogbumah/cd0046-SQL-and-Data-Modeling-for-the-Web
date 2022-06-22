@@ -566,7 +566,20 @@ def shows():
 @app.route('/shows/create')
 def create_shows():
   # renders form. do not touch.
-  form = ShowForm()
+  form = ShowForm(request.form)
+
+  try:
+    show = Show(
+      artist_id = form.artist_id.data,
+      venue_id = form.venue_id.data,
+      start_time = form.start_time.data
+    )
+    db.session.add(show)
+    db.session.commit()  
+  except:
+    db.session.rollback()
+  finally:
+    db.session.close()
   return render_template('forms/new_show.html', form=form)
 
 @app.route('/shows/create', methods=['POST'])
