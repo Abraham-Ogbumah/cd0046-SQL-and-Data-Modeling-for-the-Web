@@ -143,70 +143,44 @@ def show_venue(venue_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
   
-  data = Venue.query.get(venue_id)
-  setattr(data, "genres", data.genres.split(","))
+  venue = Venue.query.filter_by(id=venue_id).first()
+  upcoming_shows_query = Show.query.join(Venue).filter(Show.venue_id==venue_id).filter(Show.start_time>datetime.now()).all()
+  upcoming_shows = []
+  for show in upcoming_shows_query:
+    upcoming_shows.append({
+      #object.backref.attribute
+      "artist_name": show.artist.name,
+      "artist_image_link": show.artist.image_link,
+      "start_time": show.start_time
+    })
+  past_shows_query = Show.query.join(Venue).filter(Show.venue_id==venue_id).filter(Show.start_time<datetime.now()).all()
+  past_shows = []
+  for show in past_shows_query:
+    past_shows.append({
+      "artist_name": show.artist.name,
+      "artist_image_link": show.artist.image_link,
+      "start_time": show.start_time
+    })
+  upcoming_shows_count = len(upcoming_shows)
+  past_shows_count = len(past_shows)
 
-  past_shows = list(filter(lambda show: show.start_time < datetime.now(), data.shows))
-  temp_shows = []
-  for show in past_shows:
-    temp = {}
-    temp["artist_name"] = show.venue.name
-    temp["artist_id"] = show.venue.id
-    temp["artist_image_link"] = show.venue.image_link
-    temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-    temp_shows.append(temp)
-
-  setattr(data, "past_shows", temp_shows)
-  setattr(data,"past_shows_count", len(past_shows))
-
-  upcoming_shows = list(filter(lambda show: show.start_time > datetime.now(), data.shows))
-  temp_shows = []
-  for show in upcoming_shows:
-      temp = {}
-      temp["artist_name"] = show.artists.name
-      temp["artist_id"] = show.artists.id
-      temp["artist_image_link"] = show.artists.image_link
-      temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-      temp_shows.append(temp)
-
-  setattr(data, "upcoming_shows", temp_shows)    
-  setattr(data,"upcoming_shows_count", len(upcoming_shows))
-
-  # venue = Venue.query.filter_by(id=venue_id).one()
-  # shows = Show.query.filter_by(venue_id=venue_id).all()
-  
-  # past_shows = []
-  # upcoming_shows = []
-  # current_time = datetime.now()
-  
-  # for show in shows:
-  #   data = {
-  #     "artist_id": show.artist_id,
-  #     "artist_name": show.artist_name,
-  #     "artist_image_link": show.artist.image_link,
-  #     "start_time": format_datetime(str(show.start_time))}
-  #   if show.start_time > current_time:
-  #     upcoming_shows.append(data)
-  #   else:
-  #     past_shows.append(data)
-    
-  # data={
-  #   "id": venue.id,
-  #   "name": venue.name,
-  #   "genres": venue.genres,
-  #   "address": venue.address,
-  #   "city": venue.city,
-  #   "state": venue.state,
-  #   "phone": venue.phone,
-  #   "website": venue.website,
-  #   "facebook_link": venue.facebook_link,
-  #   "seeking_talent": venue.seeking_talent,
-  #   "seeking_description":venue.description,
-  #   "image_link": venue.image_link,
-  #   "past_shows": past_shows,
-  #   "upcoming_shows": upcoming_shows,
-  #   "past_shows_count": len(past_shows),"upcoming_shows_count": len(upcoming_shows)
-  # }
+  venue = {
+    "id": venue.id,
+    "name": venue.name,
+    "genres": venue.genres,
+    "address": venue.address,
+    "city": venue.city,
+    "state": venue.state,
+    "phone": venue.phone,
+    "website": venue.website_link,
+    "facebook_link": venue.facebook_link,
+    "seeking_talent": venue.seeking_talent,
+    "image_link": venue.image_link,
+    "past_shows": past_shows,
+    "upcoming_shows": upcoming_shows,
+    "past_shows_count": past_shows_count,
+    "upcoming_shows_count": upcoming_shows_count,
+  }
   return render_template('pages/show_venue.html', venue=data)
 
 #  Create Venue
@@ -224,7 +198,7 @@ def create_venue_form():
       address = form.address.data,
       phone = form.phone.data,
       facebook_link = form.facebook_link.data,
-      genres = ",".join(form.genres.data),
+      genres = form.genres.data,
       website = form.website_link.data,
       image_link = form.image_link.data,
       # venue.looking_for_talent = request.form['looking_for_talent']
@@ -338,40 +312,42 @@ def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
   
-  artist = Artist.query.get(artist_id)
-  setattr(artist, "genres", artist.genres.split(",")) # convert genre string back to array
+  artist = Artist.query.filter_by(id=artist_id).first()
+  upcoming_shows_query = Show.query.join(Artist).filter(Show.artist_id==artist.id).filter(Show.start_time>datetime.now()).all()
+  upcoming_shows = []
+  for show in upcoming_shows_query:
+    upcoming_shows.append({
+      'venue_name': show.venue.name,
+      'venue_image_link': show.venue.image_link,
+      'start_time': show.start_time
+    })
+  past_shows_query = Show.query.join(Artist).filter(Show.artist_id==artist.id).filter(Show.start_time<datetime.now()).all()
+  past_shows = []
+  for show in past_shows_query:
+    past_shows.append({
+      'venue_name': show.venue.name,
+      'venue_image_link': show.venue.image_link,
+      'start_time': show.start_time
+    })
+  upcoming_shows_count = len(upcoming_shows)
+  past_shows_count = len(past_shows)
 
-  # get past shows
-  past_shows = list(filter(lambda show: show.start_time < datetime.now(), artist.shows))
-  temp_shows = []
-  for show in past_shows:
-      temp = {}
-      temp["venue_name"] = show.venues.name
-      temp["venue_id"] = show.venues.id
-      temp["venue_image_link"] = show.venues.image_link
-      temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-
-      temp_shows.append(temp)
-
-  setattr(artist, "past_shows", temp_shows)
-  setattr(artist, "past_shows_count", len(past_shows))
-
-
-  # get upcoming shows
-  upcoming_shows = list(filter(lambda show: show.start_time > datetime.now(), artist.shows))
-  temp_shows = []
-  for show in upcoming_shows:
-      temp = {}
-      temp["venue_name"] = show.venues.name
-      temp["venue_id"] = show.venues.id
-      temp["venue_image_link"] = show.venues.image_link
-      temp["start_time"] = show.start_time.strftime("%m/%d/%Y, %H:%M:%S")
-
-      temp_shows.append(temp)
-
-  setattr(artist, "upcoming_shows", temp_shows)
-  setattr(artist, "upcoming_shows_count", len(upcoming_shows))
-
+  artist = {
+    "id": artist.id,
+    "name": artist.name,
+    "genres": artist.genres,
+    "city": artist.city,
+    "state": artist.state,
+    "phone": artist.phone,
+    "facebook_link": artist.facebook_link,
+    "website": artist.website_link,
+    "seeking_venue": artist.seeking_venue,
+    "image_link": artist.image_link,
+    "past_shows": past_shows,
+    "upcoming_shows": upcoming_shows,
+    "past_shows_count": past_shows_count,
+    "upcoming_shows_count": upcoming_shows_count,
+  }
   return render_template('pages/show_artist.html', artist=artist)
 
 #  Update
@@ -457,7 +433,7 @@ def create_artist_form():
       state = form.state.data,
       phone = form.phone.data,
       facebook_link = form.facebook_link.data,
-      genres = ",".join(form.genres.data),
+      genres = form.genres.data,
       website = form.website_link.data,
       image_link = form.image_link.data,
       # venue.looking_for_talent = request.form['looking_for_talent']
